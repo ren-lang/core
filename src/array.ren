@@ -1,0 +1,268 @@
+import "./maybe" as Maybe
+
+// CONSTRUCTORS ----------------------------------------------------------------
+
+// Create an array from a single element:
+//
+//     import pkg "ren/core/array" exposing { from }
+//     
+//     run from 1
+//     //=> [1]
+//
+pub ext from // : a -> Array a
+
+// Create an array by repeating a single element the given number of times:
+//
+//     import pkg "ren/core/array" exposing { repeat }
+//     
+//     run repeat 5 "a"
+//     //=> ["a", "a", "a", "a", "a"]
+//
+pub ext repeat // : Number -> a -> Array a
+
+// Create a range of numbers given a starting value and a length:
+//
+//     import pkg "ren/core/array" exposing { range }
+//     
+//     run range 0 10
+//     //=> [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+//
+//     run range 5 5
+//     //=> [5, 6, 7, 8, 9]
+//
+pub ext range // : Number -> Number -> Array Number
+
+// TRANSFORMATIONS -------------------------------------------------------------
+
+// Apply a function to every element in an array, and return a new array containing
+// the result:
+//
+//     import pkg "ren/core/array" exposing { map }
+//     
+//     run map (_ * 2) [0, 1, 2] 
+//     //=> [0, 2, 4]
+//
+pub ext map // : (a -> b) -> Array a -> Array b
+
+// Apply a function to every element in an array with the current index as well.
+// Returns a new array containing the result:
+//
+//     import pkg "ren/core/array" exposing { indexed_map }
+//     
+//     run indexed_map (i name => #tuple i name) ["bob", "alice"]
+//     //=> [#tuple 0 "bob", #tuple 1 "alice"]
+//
+pub ext indexed_map // : (Number -> a -> b) -> Array a -> Array b
+
+// Apply a function to every element in an array, but discard the result. Used
+// when we want to perform a side effect like logging or running a HTTP request
+// on each element.
+//
+//     import pkg "ren/core/array" exposing { each }
+//     import pkg "ren/core/console" exposing { print }
+//     
+//     run each print ["hello", "world"]
+//     //=> ()
+//
+pub ext each // : (a -> b) -> Array a -> ()
+
+// Given a function and some starting value, apply the function to each element
+// in an array and the result of the last iteration. Used to accumulate or "fold"
+// an array into something else:
+//
+//     import pkg "ren/core/array" exposing { foldl }
+//     
+//     run foldl (_ + _) 0 [1, 2, 3, 4, 5]
+//     //=> 15
+//
+//     run foldl (_ :: _) [] [1, 2, 3, 4, 5]
+//     //=> [5, 4, 3, 2, 1]
+//
+// This is called foldl because it folds from left-to-right. If you come from
+// JavaScript, this is another name for Array.reduce!
+//
+pub ext foldl // : (a -> b -> b) -> b -> Array a -> b
+
+// Given a function and some starting value, apply the function to each element
+// in an array and the result of the last iteration. Used to accumulate or "fold"
+// an array into something else:
+//
+//     import pkg "ren/core/array" exposing { foldr }
+//     
+//     run foldr (_ + _) 0 [1, 2, 3, 4, 5]
+//     //=> 15
+//
+//     run foldr (_ :: _) [] [1, 2, 3, 4, 5]
+//     //=> [1, 2, 3, 4, 5]
+//
+// This is called foldr because it folds from right-to-left. If you come from
+// JavaScript, this is another name for Array.reduceRight!
+//
+pub ext foldr // : (a -> b -> b) -> b -> Array a -> b
+
+// Construct a new array containing only elements that satisfy a given predicate:
+//
+//     import pkg "ren/core/array" exposing { filter }
+//     import pkg "ren/core/number" exposing { is_even }
+//
+//     run filter is_even [1, 2, 3, 4, 5]
+//     //=> [2, 4]
+//
+pub ext filter // : (a -> Bool) -> Array a -> Array a
+
+// Construct a new array containing only elements that failed to satisfy a given
+// predicate:
+//
+//     import pkg "ren/core/array" exposing { reject }
+//     import pkg "ren/core/number" exposing { is_even }
+//     
+//     run reject is_even [1, 2, 3, 4, 5]
+//     //=> [1, 3, 5]
+//
+// This is the opposite of filter. The above example could be rewritten in terms
+// of filter like so:
+//
+//     import pkg "ren/core/array" exposing { from }
+//     import pkg "ren/core/number" exposing { is_even }     
+//
+//     run filter (is_even >> not) [1, 2, 3, 4, 5]
+//     //=> [1, 3, 5]
+//
+pub ext reject // : (a -> Bool) -> Array a -> Array a
+
+// Apply a function to each element in an array, and keep only the results that
+// are #just.
+//
+//     import pkg "ren/core/array" exposing { filter_map }
+//     import pkg "ren/core/number" exposing { from_str }
+//     
+//     run filter_map from_str ["0", "hello", "0xF"]
+//     //=> [0, 15]
+//
+pub let filter_map = f => // : (a -> #just b | #nothing) -> Array a -> Array b
+    foldr (x xs => f x |> Maybe.map (_ :: xs) |> Maybe.unwrap xs) []
+
+// Flatten a nested array into a single array, also known as concat. 
+//
+//     import pkg "ren/core/array" exposing { flat }
+//     
+//     run flat [[1], [2, 3], [4, 5]]
+//     //=> [1, 2, 3, 4, 5]
+//
+// Note that this only flattens one level of nesting!
+//
+pub ext flat // : Array (Array a) -> Array a
+
+// Similar to `filter_map`. Apply a function that returns an array to each element
+// of an array, and then flatten the result:
+//
+//     import pkg "ren/core/array" exposing { flat_map }
+//     
+//     run flat_map (n => [n, n * 2]) [1, 2, 3]
+//     //=> [1, 2, 2, 4, 3, 6]
+// 
+// This is equivalent to calling `map` first and then passing the result into
+// `concat`.
+//
+//     run map (n => [n, n * 2]) [1, 2, 3] |> concat
+//     //=> [1, 2, 2, 4, 3, 6]
+// 
+pub ext flat_map // : (a -> Array b) -> Array a -> Array b
+
+// QUERIES ---------------------------------------------------------------------
+
+// Returns the first element in an array, or `#nothing` if the array is empty.
+//
+//     import pkg "ren/core/array" exposing { head }
+//     
+//     run head [1, 2, 3]
+//     //=> #just 1
+//
+//     run head []
+//     //=> #nothing
+//
+// Equivalent to calling `at 0`
+pub ext head // : Array a -> #just a | #nothing
+
+// Returns a new array with the first element removed. If the supplied array is
+// empty, this will return another empty array.
+//
+//     import pkg "ren/core/array" exposing { tail }
+//     
+//     run tail [1, 2, 3]
+//     //=> [2, 3]
+//
+//     run tail []
+//     //=> []
+//
+pub ext tail // : Array a -> Array a
+
+// Attempt to access an element of an array at the given index. Will return `#nothing`
+// if no element exists.
+//
+//     import pkg "ren/core/array" exposing { at }
+//     
+//     run at 2 [1, 2, 3]
+//     //=> #just 3
+//
+//     run at 10 [1, 2, 3]
+//     //=> #nothing
+//
+pub ext at // : Number -> Array a -> #just a | #nothing
+
+//
+//     import pkg "ren/core/array" exposing { length }
+//     
+//     run length [1, 2, 3, 4, 5]
+//     //=> 5
+//
+//     run length []
+//     //=> 0
+//
+pub ext length // : Array a -> Number
+
+//
+//     import pkg "ren/core/array" exposing { is_empty }
+//     
+//     run is_empty [1, 2, 3, 4, 5]
+//     //=> false
+//
+//     run is_empty []
+//     //=> true
+//
+pub let is_empty = arr =>  // : Array a -> Bool
+    length arr == 0
+
+// Apply some predicate function to every element in an array and determine if
+// at least one satisfied it.
+//
+//     import pkg "ren/core/array" exposing { any }
+//     import pkg "ren/core/number" exposing { is_even }
+//     
+//     run any is_even [1, 2, 3, 4, 5]
+//     //=> true
+//
+pub ext any // : (a -> Bool) -> Array a -> Bool
+
+// Apply some predicate function to every element in an array and determine if
+// at all elements satisfied it.
+//
+//     import pkg "ren/core/array" exposing { all }
+//     import pkg "ren/core/number" exposing { is_even }
+//     
+//     run all is_even [1, 2, 3, 4, 5]
+//     //=> false
+//
+//     run all is_even [2, 4, 6, 8, 10]
+//     //=> true
+//
+pub ext all // : (a -> Bool) -> Array a -> Bool
+
+// A runtime type check to see if a given dynamically typed value is an array or
+// not.
+//     
+// This is currently necessary to expose beacuse of a bug that means importing
+// this module `as Array` will accidentally shadow the `Array.isArray` JavaScript
+// function which is used in Ren's type patterns.
+//
+pub ext isArray // : * -> Bool

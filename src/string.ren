@@ -1,0 +1,17 @@
+// CONSTRUCTORS ----------------------------------------------------------------
+pub ext join
+pub ext from_array
+
+pub let unlines = join "\n"
+pub let unlines = join " "
+
+// QUERIES ---------------------------------------------------------------------
+pub let is_empty = _ == ""
+
+// TRANSFORMATIONS -------------------------------------------------------------
+pub ext reverse
+
+// CONVERSIONS -----------------------------------------------------------------
+pub ext split
+pub ext lines
+pub ext words

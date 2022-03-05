@@ -1,0 +1,30 @@
+// CONSTRUCTORS ----------------------------------------------------------------
+pub ext from_string 
+
+// CONSTANTS -------------------------------------------------------------------
+pub ext pi
+pub ext tau
+
+// TRANSFORMATIONS -------------------------------------------------------------
+pub let abs = x => if x < 0 then x * -1 else x
+pub let neg = x => x * -1
+
+
+// QUERIES ---------------------------------------------------------------------
+pub let is_even = x => x % 2 == 0
+pub let is_odd  = x => x % 2 == 1
+
+pub ext is_nan
+
+pub let max = x y => if x >= y then x else y
+pub let min = x y => if x <= y then x else y
+
+// TRIGONOMETRY ----------------------------------------------------------------
+pub ext sin
+pub ext cos
+pub ext tan
+pub ext atan
+pub ext atan2
+
+// CONVERSIONS -----------------------------------------------------------------
+pub ext to_string

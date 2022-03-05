@@ -1,0 +1,17 @@
+pub ext curry // : * -> *
+
+pub ext apply // : * -> Array * -> *
+
+pub ext memo // : (a -> b) -> a -> b
+
+pub let flip = f b a => // : (a -> b -> c) -> b -> a -> c
+    f a b
+
+pub let id = a => // : a -> a
+    a
+
+pub let always = x _ => // : a -> b -> a
+    x
+
+pub let discard = _ y => // : a -> b -> b
+    y

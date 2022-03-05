@@ -1,0 +1,31 @@
+// Print a message to the console. Both `log` and `print` are exposed to be more
+// familiar to developers coming from different languages.
+//
+// This, and most of the other logging functions, return `()` as they are used
+// exlusively for their side effects. Take a look at `debug` for a version that
+// returns the input argument unchanged.
+//
+pub ext log // : String -> ()
+pub let print = log
+
+// Print a warning to the console.
+//
+pub ext warn // : String -> ()
+
+// Print an error to the console.
+//
+pub ext error // : String -> ()
+
+// Used to print _any_ value to the console. This acts as an identity functions
+// and returns the argument unchanged, making it useful to use `debug` in a pipe.
+//
+//     import pkg "ren/core/array" as Array
+//     import plg "ren/core/console" exposing { debug }
+//
+//     [1, 2, 3, 4, 5]
+//         |> Array.map (_ * 2)
+//         |> debug
+//     //=> logs to the console: "[1, 2, 3, 4, 5]"
+//     //=> [1, 2, 3, 4, 5]
+//
+pub ext debug // : a -> a

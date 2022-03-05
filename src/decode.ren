@@ -1,0 +1,144 @@
+import "./array"    as Array
+import "./console"  as Console
+import "./maybe"    as Maybe
+import "./number"   as Num
+import "./object"   as Obj
+
+// A wrapper around JSON.parse that 
+ext parse_string // : String -> #just * | #nothing
+
+// pub type Decoder a = * -> #just a | #nothing
+
+// Attempt to parse a JSON string and decode it with the provided decoder. Most
+// useful when dealing with responses from an API or perhaps reading some serialised
+// configuration. 
+//
+pub let from_string = decoder input => // : Decoder a -> String -> #just a | #nothing
+    parse_string input
+        |> Maybe.and_then decoder
+
+// Attempt to decode any value with the provided decoder. This can accept values
+// created in Ren or externals coming from JavaScript. In both cases, `from_value`
+// can be a way to bring a dynamically typed value into your statically typed code
+// safely, without type assertions.
+//
+pub let from_value = decoder input => // : Decoder a -> * -> #just a | #nothing
+    decoder input
+
+// A decoder that ignores its input and always succeeds with the value provided:
+//
+//     import pkg "ren/core/decode" exposing { from_string, succeed }
+//
+//     run from_string (succeed 42) "true"
+//     //=> #just 42
+//
+//     run from_string (succeed 42) "[1, 2, 3]"
+//     //=> #just 42
+//
+//     run from_string (succeed 42) "200"
+//     //=> #just 42
+//
+// As we'll see later, `succeed` is most useful when combined with a pipe that
+// chains `and_map` together.
+//
+//     import pkg "ren/core/decode" exposing { from_string, succeed, field, as_number, and_map }
+//
+//     let sum =
+//         succeed (_ + _)
+//             |> and_map (field "x" as_number)
+//             |> and_map (field "y" as_number)
+//
+//    run from_string sum "{\"x\": 1, \"y\": 2}"
+//    //=> #just 3
+//
+pub let succeed = a _ =>  // : a -> Decoder a
+    #just a
+
+// The opposite of `succeed`: ignores its input and always fails!
+//
+//     import pkg "ren/core/decode" exposing { from_string, fail }
+//
+//     run from_string fail "true"
+//     //=> #nothing
+//
+// Where `succeed` is most useful in combination with `and_map`, `fail` is best
+// used in combination with `and_then` to construct more complex decoders from the
+// primitives available here.
+//
+//     import pkg "ren/core/decode" exposing { from_string, succeed, fail, as_number, and_then }
+//
+//     let num_over_five =
+//         as_number |> and_then (n => if n > 5 then succeed n else fail)
+//
+//     run from_string num_over_five "10"
+//     //=> #just 10
+//
+//     run from_string num_over_five "3"
+//     //=> #nothing
+//
+pub let fail = _ => // : Decoder a
+    (#nothing)  // You'll see `#nothing` wrapped in parentheses in quite a few places. 
+                // Currently there's some parser bug that means a comment can't 
+                // follow an enum literal with no arguments, and wrapping it seems
+                // to skirt that issure for now.
+
+//
+pub let as_number = a => where a // : Decoder Number
+    is @Number n => #just n
+    is @String s => Num.from_string s
+
+    is @Object _ => #nothing
+    is @Array _  => (#nothing)
+
+//
+pub let as_string = a => where a // : Decoder String
+    is @Number n => #just (Num.to_string n)
+    is @String s => #just s
+
+    is @Object _ => #nothing
+    is @Array  _ => (#nothing)
+
+//
+pub let as_boolean = a => where a // : Decoder Boolean
+    is @Boolean b => #just b
+    is @Object  _ => (#nothing)
+
+//
+pub let as_array = decodeA a => where a // : Decoder a -> Decoder (Array a)
+    is @Array arr => Array.foldr (decodeA >> Maybe.map_both (_ :: _)) (#just []) arr
+    is @Object  _ => (#nothing)
+
+//
+pub let field = key decoder a => where a // : String -> Decoder a -> Decoder a
+    is @Object obj => 
+        Obj.get key obj |> Maybe.and_then decoder
+
+    is @Number _ => #nothing
+    is @String _ => #nothing
+    is @Array  _ => (#nothing)
+
+//
+pub let at = keys decoder a => // : Array String -> Decoder a -> Decoder a
+    Array.foldr field decoder keys a
+
+
+//
+pub let at_index = idx decoder a => where a // : Number -> Decoder a -> Decoder a
+    is @Array arr => 
+        Array.at idx arr |> Maybe.and_then decoder
+
+    is @Number _ => #nothing
+    is @String _ => #nothing
+    is @Object _ => (#nothing)
+
+//
+pub let map = f decodeA x => // : (a -> b) -> Decoder a -> Decoder b
+    (Maybe.map f (decodeA x))
+
+//
+pub let map_both = f decodeA decodeB x => // : (a -> b -> c) -> Decoder a -> Decoder b -> Decoder c
+   (Maybe.map_both f (decodeA x) (decodeB x))
+
+//
+pub let and_map = decodeA decodeF => // : Decoder a -> Decoder (a -> b) -> Decoder b
+    map_both (_ |> _) decodeA decodeF

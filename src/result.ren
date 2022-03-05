@@ -1,0 +1,30 @@
+pub let ok  = a => #ok a
+pub let err = x => #err x
+
+pub let map = f r => where r
+    is #ok a  => #ok (f a)
+    is #err x => #err x
+
+pub let map_err = f r => where r
+    is #ok a  => #ok a
+    is #err x => #err (f x)
+
+pub let and_then = f r => where r
+    is #ok a  => f a
+    is #err x => #err x
+
+pub let is_ok = r => where r
+    is #ok _  => true
+    is #err _ => false
+
+pub let is_err = r => where r
+    is #ok _  => false
+    is #err _ => true
+
+pub let unwrap = b r => where r
+    is #ok a  => a
+    is #err _ => b
+
+pub let extract = f r => where r
+    is #ok a  => a
+    is #err x => f x

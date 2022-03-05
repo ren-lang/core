@@ -1,0 +1,32 @@
+pub let just = a => #just a
+pub let nothing = #nothing
+
+pub let map = f m => where m
+    is #just a  => #just (f a)
+    is #nothing => #nothing
+
+pub let map_both = f mA mB => 
+    where [ mA, mB ]
+        is [ #just a, #just b ] => 
+            #just (f a b)
+
+        is [ a, b ] =>
+            #nothing
+
+pub let and_map = a b => map_both (_ _) a b
+
+pub let and_then = f m => where m
+    is #just a  => f a
+    is #nothing => #nothing 
+
+pub let is_just = m => where m
+    is #just a  => true
+    is #nothing => false
+
+pub let is_nothing = m => where m
+    is #just a  => false
+    is #nothing => true
+
+pub let unwrap = b m => where m
+    is #just a  => a
+    is #nothing => b

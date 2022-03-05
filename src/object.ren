@@ -1,0 +1,21 @@
+// CONSTRUCTORS ----------------------------------------------------------------
+pub ext construct
+pub ext from_array
+
+// TRANSFORMATIONS -------------------------------------------------------------
+pub ext set
+pub ext update
+
+pub ext map
+pub ext filter
+
+// QUERIES ---------------------------------------------------------------------
+pub ext get
+pub ext has
+
+
+// CONVERSIONS -----------------------------------------------------------------
+pub ext keys
+pub ext values
+
+pub ext to_array
